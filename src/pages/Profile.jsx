@@ -8,9 +8,7 @@ export default function Profile() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  // The API spec dictates a deviation alpha knob (0.0 - 1.0)
-  // We initialize it from the user context if available, otherwise default to 0.5
-  const [deviation, setDeviation] = useState(user?.deviation || 0.5);
+  const [deviation, setDeviation] = useState(user?.deviation_alpha || 0.2);
   const [isSavingDeviation, setIsSavingDeviation] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
 
@@ -31,7 +29,7 @@ export default function Profile() {
     try {
       await fetchApi("/api/me/deviation", {
         method: "PATCH",
-        body: JSON.stringify({ deviation: deviation }),
+        body: JSON.stringify({ alpha: deviation }),
       });
       setSaveMessage("Algorithm updated.");
       setTimeout(() => setSaveMessage(""), 3000); // Clear message after 3s
