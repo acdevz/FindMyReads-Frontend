@@ -143,7 +143,7 @@ export default function GenrePreferencesPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {genres.map((genre) => {
             const meta = getGenreMeta(genre.slug);
-            const currentValue = preferences[genre.id] || 3;
+            const currentValue = preferences[genre.id] || 0;
             const isInteracted = preferences.hasOwnProperty(genre.id);
 
             return (
