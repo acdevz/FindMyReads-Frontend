@@ -10,8 +10,7 @@ export default function ScanResultCard({ initialBook, index, scanId }) {
 
   // Interaction States
   const [isSaving, setIsSaving] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
-  const [userRating, setUserRating] = useState(null);
+  const [isSaved, setIsSaved] = useState(initialBook.alreadyRead || false);
 
   // LLM Reason States
   const [reason, setReason] = useState(null);
@@ -21,7 +20,7 @@ export default function ScanResultCard({ initialBook, index, scanId }) {
   // Visual Tiers based on Index
   const isHighlyRecommended = index === 0;
   const isRecommended = index === 1;
-  const isNotRecommended = index >= 2;
+  const isYouMightLike = index >= 2;
 
   // Fetch full book details on mount
   useEffect(() => {
@@ -38,7 +37,7 @@ export default function ScanResultCard({ initialBook, index, scanId }) {
     fetchFullDetails();
   }, [bookId]);
 
-  // Handle Save to Library [cite: 106-113]
+  // Handle Save to Library
   const handleSaveToLibrary = async () => {
     setIsSaving(true);
     try {
@@ -55,36 +54,6 @@ export default function ScanResultCard({ initialBook, index, scanId }) {
       alert(err.message || "Failed to save book.");
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  // Handle Rating (No stars, purely numerical)
-  const handleRate = async (rateValue) => {
-    setUserRating(rateValue);
-    try {
-      // API expects a PATCH for existing library books
-      await fetchApi(`/api/me/books/${bookId}/rate`, {
-        method: "PATCH",
-        body: JSON.stringify({ rating: rateValue }),
-      });
-      setIsSaved(true); // Implies it's in the library now
-    } catch (err) {
-      // If it fails (e.g., not in library yet), POST it with the rating [cite: 106-110]
-      try {
-        await fetchApi("/api/me/books", {
-          method: "POST",
-          body: JSON.stringify({
-            bookId: bookId,
-            status: "read",
-            source: "scan",
-            rating: rateValue,
-          }),
-        });
-        setIsSaved(true);
-      } catch (e) {
-        alert("Failed to save rating.");
-        setUserRating(null); // revert UI on failure
-      }
     }
   };
 
@@ -125,12 +94,12 @@ export default function ScanResultCard({ initialBook, index, scanId }) {
     tagText = "Recommended";
     ribbonColor = "bg-secondary";
     highlightColor = "text-secondary border-secondary/30";
-  } else if (isNotRecommended) {
+  } else if (isYouMightLike) {
     // Grayed out but still fully functional
     cardClasses =
       "bg-surface-container rounded-[1.5rem] p-6 flex flex-col md:flex-row gap-6 border border-outline-variant/10 opacity-80 grayscale-[0.2] hover:grayscale-0 transition-all";
     tagColor = "bg-on-surface-variant/10 text-on-surface-variant";
-    tagText = "Not Recommended";
+    tagText = "You Might Like";
     ribbonColor = "bg-on-surface-variant/40";
     highlightColor = "text-on-surface-variant border-on-surface-variant/20";
     reasonHeading = "Prediction Insight";
@@ -140,7 +109,10 @@ export default function ScanResultCard({ initialBook, index, scanId }) {
   const title = bookDetails.title || "Loading...";
   const author = bookDetails.author || "...";
   const coverUrl = bookDetails.coverUrl;
-  const displayGenre = bookDetails.genres?.[0] || "Unknown Genre";
+  const displayGenre =
+    bookDetails.genres?.length > 0
+      ? bookDetails.genres.join(", ")
+      : "Uncategorized";
   const publishedYear = bookDetails.publishedAt
     ? new Date(bookDetails.publishedAt).getFullYear()
     : "N/A";
@@ -185,14 +157,20 @@ export default function ScanResultCard({ initialBook, index, scanId }) {
                 {tagText}
               </span>
 
-              {/* Numeric Match Score instead of Stars */}
-              <span className="font-label text-xs font-bold text-on-surface-variant/60">
-                {Math.round((initialBook.matchScore || 0) * 100)}% Match
-              </span>
+              {/* Conditional Match Score vs Library Text (No Icons) */}
+              {initialBook.alreadyRead ? (
+                <span className="font-label text-xs font-bold text-on-surface-variant/60">
+                  In Your Library
+                </span>
+              ) : (
+                <span className="font-label text-xs font-bold text-on-surface-variant/60">
+                  {Math.round((initialBook.matchScore || 0) * 100)}% Match
+                </span>
+              )}
             </div>
 
             <h3
-              className={`font-headline text-2xl font-semibold mb-1 ${isNotRecommended ? "text-on-surface-variant" : "text-on-surface"}`}
+              className={`font-headline text-2xl font-semibold mb-1 ${isYouMightLike ? "text-on-surface-variant" : "text-on-surface"}`}
             >
               {title}
             </h3>
@@ -269,7 +247,7 @@ export default function ScanResultCard({ initialBook, index, scanId }) {
             </div>
           </div>
 
-          {/* Action Row: Save & Discrete Rating (No Stars) */}
+          {/* Action Row: Save & Discrete Rating */}
           <div className="flex flex-wrap items-center gap-4 mt-auto pt-4 border-t border-outline-variant/10">
             <button
               onClick={handleSaveToLibrary}
@@ -290,7 +268,9 @@ export default function ScanResultCard({ initialBook, index, scanId }) {
                   >
                     bookmark_added
                   </span>{" "}
-                  Saved
+                  {initialBook.alreadyRead
+                    ? "Already in Library"
+                    : "Saved to Library"}
                 </>
               ) : (
                 <>
@@ -301,29 +281,6 @@ export default function ScanResultCard({ initialBook, index, scanId }) {
                 </>
               )}
             </button>
-
-            {/* {/* Numerical Rating Component (No Stars)
-            <div className="flex items-center gap-2 bg-surface-container rounded-xl p-1">
-              <span className="font-label text-[9px] uppercase tracking-widest font-bold text-on-surface-variant/60 ml-2">
-                Rate:
-              </span>
-              <div className="flex gap-1">
-                {[1, 2, 3, 4, 5].map((num) => (
-                  <button
-                    key={num}
-                    onClick={() => handleRate(num)}
-                    className={`w-8 h-8 rounded-lg font-label text-xs font-bold transition-all ${
-                      userRating === num
-                        ? "bg-primary text-on-primary shadow-md"
-                        : "text-on-surface-variant hover:bg-surface-container-highest"
-                    }`}
-                  >
-                    {num}
-                  </button>
-                ))}
-              </div>
-            </div>
-            */}
           </div>
         </div>
       </div>

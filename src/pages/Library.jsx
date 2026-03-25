@@ -20,7 +20,7 @@ export default function Library() {
     user?.avatarUrl ||
     `https://ui-avatars.com/api/?name=${user?.username || "Reader"}&background=a43700&color=fff&rounded=true`;
 
-  // Fetch library data whenever the filter changes [cite: 101-105]
+  // Fetch library data whenever the filter changes
   const fetchLibrary = async () => {
     setIsLoading(true);
     try {
@@ -55,18 +55,16 @@ export default function Library() {
       if (sortOption === "title") {
         return (a.book.title || "").localeCompare(b.book.title || "");
       }
-      // Default to recent (assuming userBook has an updatedAt or readAt field, fallback to array order)
+      // Default to recent
       return new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0);
     });
 
-  // Future feature hook for Global API Search
   const handleGlobalSearch = (e) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
     console.log(
       `Triggering global search for: ${searchQuery} via /api/books/search?q=${searchQuery}`,
     );
-    // Future implementation: Fetch global results and display them in a dropdown or new section
   };
 
   return (
@@ -93,14 +91,15 @@ export default function Library() {
         </div>
       </header>
 
-      <main className="pt-24 px-6 max-w-4xl mx-auto">
+      {/* CHANGED: max-w-4xl to max-w-2xl to perfectly match ScanResults width */}
+      <main className="pt-24 px-6 max-w-2xl mx-auto">
         {/* Header & Search Area */}
         <section className="mb-10 animate-fade-in-up">
           <h2 className="font-headline text-4xl md:text-5xl font-medium leading-tight mb-6">
             The Library
           </h2>
 
-          {/* Search Bar (Flush Style per Design System) */}
+          {/* Search Bar */}
           <form onSubmit={handleGlobalSearch} className="relative mb-8">
             <span className="absolute left-0 top-1/2 -translate-y-1/2 material-symbols-outlined text-on-surface-variant/50">
               search
@@ -119,7 +118,7 @@ export default function Library() {
             {/* Status Tabs */}
             <div className="flex items-center gap-6 overflow-x-auto no-scrollbar border-b border-outline-variant/10 pb-2">
               {[
-                { id: "want_to_read", label: "Want to Read" },
+                { id: "want_to_read", label: "Unread" },
                 { id: "read", label: "Completed" },
                 { id: "all", label: "Everything" },
               ].map((tab) => (
@@ -184,12 +183,13 @@ export default function Library() {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            // CHANGED: Replaced the 2-column grid with a single column stack (space-y-12)
+            <div className="space-y-12">
               {processedBooks.map((userBook) => (
                 <LibraryBookCard
                   key={userBook.userBookId}
                   userBook={userBook}
-                  onUpdate={fetchLibrary} // Re-fetch or update local state if heavily modified
+                  onUpdate={fetchLibrary}
                 />
               ))}
             </div>

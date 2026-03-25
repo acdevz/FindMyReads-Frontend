@@ -4,7 +4,32 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { fetchApi } from "../utils/api";
 import BookCard from "../components/BookCard";
+import ScanHistoryCard from "../components/ScanHistoryCard"; // <-- Import the new card
 import CameraOverlay from "../components/CameraOverlay";
+
+// Helper function to group scans by Date
+const groupScansByDate = (scans) => {
+  const groups = {};
+  const todayStr = new Date().toLocaleDateString();
+  const yesterdayStr = new Date(Date.now() - 86400000).toLocaleDateString();
+
+  scans.forEach((scan) => {
+    const dateObj = new Date(scan.createdAt || Date.now());
+    const dateStr = dateObj.toLocaleDateString();
+
+    let label = dateObj.toLocaleDateString(undefined, {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+    if (dateStr === todayStr) label = "Today";
+    else if (dateStr === yesterdayStr) label = "Yesterday";
+
+    if (!groups[label]) groups[label] = [];
+    groups[label].push(scan);
+  });
+  return groups;
+};
 
 export default function HomeScanner() {
   const { user } = useAuth();
@@ -24,14 +49,17 @@ export default function HomeScanner() {
     user?.avatarUrl ||
     `https://ui-avatars.com/api/?name=${user?.username || "User"}&background=a43700&color=fff&rounded=true`;
 
-  // Fetch Data based on active tab
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
       try {
         if (activeTab === "scans") {
           const data = await fetchApi("/api/scans");
-          setScans(data);
+          // Sort scans so newest are first
+          const sortedScans = (data || []).sort(
+            (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0),
+          );
+          setScans(sortedScans);
         } else if (activeTab === "books" && readBooks.length === 0) {
           const data = await fetchApi("/api/me/books?status=read");
           setReadBooks(data);
@@ -43,21 +71,19 @@ export default function HomeScanner() {
       }
     };
     loadData();
-  }, [activeTab, readBooks.length]); // re-run if tab changes (and books haven't been loaded yet)
+  }, [activeTab, readBooks.length]);
 
-  // Shared Upload Logic for both Camera and File Picker
   const processImage = async (file) => {
-    setIsUploading(true); // Show loading state on main screen
-
+    setIsUploading(true);
     const formData = new FormData();
-    formData.append("image", file); // The image file of the bookshelf [cite: 166]
+    formData.append("image", file);
 
     try {
       const scanResult = await fetchApi("/api/scans", {
-        method: "POST", // [cite: 162]
+        method: "POST",
         body: formData,
       });
-      navigate(`/scan/${scanResult.scanId}`); // [cite: 167]
+      navigate(`/scan/${scanResult.scanId}`);
     } catch (error) {
       console.error("Scan upload failed:", error);
       alert(error.message || "Failed to analyze shelf.");
@@ -66,27 +92,26 @@ export default function HomeScanner() {
     }
   };
 
-  // Handle image captured from CameraOverlay
   const handlePhotoCapture = (file) => {
-    setIsCameraOpen(false); // Close camera immediately
+    setIsCameraOpen(false);
     processImage(file);
   };
 
-  // Handle image selected from gallery
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
     if (file) {
       processImage(file);
     }
-    // Reset input so the same file can be selected again if needed
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   };
 
+  // Apply grouping to scans
+  const groupedScans = groupScansByDate(scans);
+
   return (
     <>
-      {/* Decorative Animation Styles */}
       <style>
         {`
           .scanner-frame {
@@ -101,7 +126,6 @@ export default function HomeScanner() {
         `}
       </style>
 
-      {/* Render Camera Full Screen if active */}
       {isCameraOpen && (
         <CameraOverlay
           onClose={() => setIsCameraOpen(false)}
@@ -109,7 +133,7 @@ export default function HomeScanner() {
         />
       )}
 
-      {/* TopAppBar */}
+      {/* Header */}
       <header className="fixed top-0 left-0 w-full z-40 flex justify-between items-center px-6 py-4 bg-surface/80 backdrop-blur-md border-b border-outline-variant/10">
         <div className="flex items-center gap-3">
           <span
@@ -132,7 +156,7 @@ export default function HomeScanner() {
       </header>
 
       <main className="pt-20">
-        {/* Decorative Header Area */}
+        {/* Scanner Hero */}
         <section className="relative w-full h-[397px] bg-on-surface overflow-hidden flex flex-col items-center justify-center">
           <img
             src="https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=2000&auto=format&fit=crop"
@@ -140,11 +164,9 @@ export default function HomeScanner() {
             className="absolute inset-0 w-full h-full object-cover opacity-30 grayscale-[0.5]"
           />
 
-          {/* Decorative Scan Overlay */}
           <div className="absolute top-8 left-1/2 -translate-x-1/2 pointer-events-none">
             <div className="relative w-56 h-56 border-2 border-primary/40 rounded-xl overflow-hidden shadow-[0_0_0_100vmax_rgba(27,28,26,0.5)] m-1">
               <div className="scanner-frame absolute inset-0 opacity-40"></div>
-              {/* Corner Markers */}
               <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-primary rounded-tl-sm"></div>
               <div className="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-primary rounded-tr-sm"></div>
               <div className="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-primary rounded-bl-sm"></div>
@@ -152,9 +174,7 @@ export default function HomeScanner() {
             </div>
           </div>
 
-          {/* Action Buttons Container */}
           <div className="absolute bottom-16 left-1/2 -translate-x-1/2 flex items-center gap-4 z-20 w-max">
-            {/* Main Live Camera Button */}
             <button
               onClick={() => setIsCameraOpen(true)}
               disabled={isUploading}
@@ -172,7 +192,6 @@ export default function HomeScanner() {
               </span>
             </button>
 
-            {/* Direct File Upload Button */}
             <input
               type="file"
               accept="image/*"
@@ -183,7 +202,6 @@ export default function HomeScanner() {
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              aria-label="Upload existing photo"
               className="w-14 h-14 bg-surface-bright/90 backdrop-blur-md text-primary rounded-full shadow-lg hover:bg-surface border border-outline-variant/30 hover:scale-105 active:scale-95 transition-all flex items-center justify-center disabled:opacity-80 disabled:hover:scale-100"
             >
               <span className="material-symbols-outlined">photo_library</span>
@@ -208,7 +226,7 @@ export default function HomeScanner() {
                 className={`h-1 bg-primary mt-1 rounded-full transition-all duration-300 ${activeTab === "scans" ? "w-8" : "w-0 group-hover:w-4"}`}
               ></div>
             </button>
-            <button
+            {/* <button
               onClick={() => setActiveTab("books")}
               className="flex flex-col items-start group"
             >
@@ -220,50 +238,57 @@ export default function HomeScanner() {
               <div
                 className={`h-1 bg-primary mt-1 rounded-full transition-all duration-300 ${activeTab === "books" ? "w-8" : "w-0 group-hover:w-4"}`}
               ></div>
-            </button>
+            </button>*/}
           </div>
 
           {/* Dynamic Content Area */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-8">
+          <div className="pb-8">
             {isLoading && (
-              <div className="col-span-full py-12 flex justify-center">
+              <div className="py-12 flex justify-center">
                 <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
               </div>
             )}
 
-            {!isLoading && activeTab === "scans" && scans.length === 0 && (
-              <div className="col-span-full py-8 text-center text-on-surface-variant font-headline italic text-xl">
-                You haven't scanned any shelves yet.
-              </div>
-            )}
-
-            {!isLoading && activeTab === "books" && readBooks.length === 0 && (
-              <div className="col-span-full py-8 text-center text-on-surface-variant font-headline italic text-xl">
-                Your library is empty.
-              </div>
-            )}
-
-            {/* Render Books using the reusable component */}
-            {!isLoading &&
-              activeTab === "scans" &&
-              scans.map((scan, index) => (
-                <BookCard
-                  key={scan.scanId}
-                  type="scan"
-                  data={scan}
-                  index={index}
-                />
-              ))}
-
+            {/* Read Books Rendering */}
             {!isLoading &&
               activeTab === "books" &&
-              readBooks.map((userBook, index) => (
-                <BookCard
-                  key={userBook.userBookId}
-                  type="read"
-                  data={userBook}
-                  index={index}
-                />
+              (readBooks.length === 0 ? (
+                <div className="py-8 text-center text-on-surface-variant font-headline italic text-xl">
+                  Your library is empty.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {readBooks.map((userBook, index) => (
+                    <BookCard
+                      key={userBook.userBookId}
+                      type="read"
+                      data={userBook}
+                      index={index}
+                    />
+                  ))}
+                </div>
+              ))}
+
+            {/* Grouped Scans Rendering */}
+            {!isLoading &&
+              activeTab === "scans" &&
+              (scans.length === 0 ? (
+                <div className="py-8 text-center text-on-surface-variant font-headline italic text-xl">
+                  You haven't scanned any shelves yet.
+                </div>
+              ) : (
+                Object.keys(groupedScans).map((dateLabel) => (
+                  <div key={dateLabel} className="mb-10 animate-fade-in-up">
+                    <h3 className="font-label text-xs uppercase tracking-widest font-bold text-on-surface-variant/60 mb-4 ml-1">
+                      {dateLabel}
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {groupedScans[dateLabel].map((scan) => (
+                        <ScanHistoryCard key={scan.scanId} scan={scan} />
+                      ))}
+                    </div>
+                  </div>
+                ))
               ))}
           </div>
         </section>

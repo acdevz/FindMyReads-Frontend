@@ -90,10 +90,10 @@ export default function Profile() {
           <div className="flex gap-6 mt-8">
             <div className="flex flex-col items-center">
               <span className="font-headline text-2xl text-primary font-bold">
-                {user?.booksRatedCount || 0}
+                {user?.booksCount || 0}
               </span>
               <span className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant/60 font-bold">
-                Books Rated
+                Books Discovered
               </span>
             </div>
             <div className="w-px bg-outline-variant/30"></div>
