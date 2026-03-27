@@ -1,3 +1,4 @@
+// src/pages/AuthCallback.jsx
 import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -9,29 +10,21 @@ export default function AuthCallback() {
   const { setUser } = useAuth();
 
   useEffect(() => {
-    const accessToken = searchParams.get("token");
-    const refreshToken = searchParams.get("refresh");
     const onboardingDone = searchParams.get("onboarding") === "true";
 
-    if (accessToken && refreshToken) {
-      localStorage.setItem("accessToken", accessToken);
-      localStorage.setItem("refreshToken", refreshToken);
-
-      fetchApi("/api/me")
-        .then((profile) => {
-          setUser(profile);
-          if (onboardingDone) {
-            navigate("/home", { replace: true });
-          } else {
-            navigate("/onboarding/genres", { replace: true });
-          }
-        })
-        .catch(() => {
-          // Fallback
-          navigate("/login", { replace: true });
-        });
-    }
-  }, [searchParams, navigate]);
+    fetchApi("/api/me")
+      .then((profile) => {
+        setUser(profile);
+        if (onboardingDone) {
+          navigate("/home", { replace: true });
+        } else {
+          navigate("/onboarding/genres", { replace: true });
+        }
+      })
+      .catch(() => {
+        navigate("/login", { replace: true });
+      });
+  }, [searchParams, navigate, setUser]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-surface">

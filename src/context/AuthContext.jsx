@@ -1,3 +1,4 @@
+// src/context/AuthContext.jsx
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { fetchApi } from "../utils/api";
 
@@ -9,33 +10,24 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const initAuth = async () => {
-      const token = localStorage.getItem("accessToken");
-      if (token) {
-        try {
-          const profile = await fetchApi("/api/me");
-          setUser(profile);
-        } catch (error) {
-          logout();
-        }
+      try {
+        const profile = await fetchApi("/api/me");
+        setUser(profile);
+      } catch (error) {
+        setUser(null);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     initAuth();
   }, []);
 
-  // Helper to store tokens and set user from the TokenPair object
   const handleAuthResponse = async (data) => {
-    localStorage.setItem("accessToken", data.accessToken);
-    localStorage.setItem("refreshToken", data.refreshToken);
-
     try {
       const profile = await fetchApi("/api/me");
       setUser(profile);
     } catch (error) {
-      setUser({
-        id: data.userId,
-        onboardingDone: data.onboardingDone,
-      });
+      setUser({ id: data.userId, onboardingDone: data.onboardingDone });
     }
     return data;
   };
@@ -58,10 +50,8 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await fetchApi("/api/auth/logout", { method: "POST" }); // [cite: 64, 66]
+      await fetchApi("/api/auth/logout", { method: "POST" });
     } finally {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
       setUser(null);
     }
   };

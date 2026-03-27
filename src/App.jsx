@@ -10,7 +10,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 // --- Pages & Layouts ---
 import AuthPage from "./pages/AuthPage";
 import AuthCallback from "./pages/AuthCallback";
-import GenrePreferencesPage from "./pages/GenrePreferencesPage"; // Make sure the filename matches your actual file
+import OnboardingPage from "./pages/OnboardingPage"; // Make sure the filename matches your actual file
 import HomeScanner from "./pages/HomeScanner";
 import MainLayout from "./layouts/MainLayout";
 import ScanResults from "./pages/ScanResults";
@@ -40,7 +40,6 @@ const OnboardingGuard = ({ children }) => {
   if (loading) return null;
 
   if (!user) return <Navigate to="/login" replace />;
-  if (user.onboardingDone) return <Navigate to="/home" replace />;
 
   return children;
 };
@@ -78,7 +77,7 @@ function App() {
             path="/onboarding/genres"
             element={
               <OnboardingGuard>
-                <GenrePreferencesPage />
+                <OnboardingPage />
               </OnboardingGuard>
             }
           />

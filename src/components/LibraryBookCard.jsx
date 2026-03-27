@@ -39,7 +39,7 @@ export default function LibraryBookCard({ userBook, onUpdate }) {
       });
       if (onUpdate) onUpdate();
     } catch (err) {
-      alert("Failed to save rating.");
+      console.error("Failed to save rating.");
       setRating(userBook.rating || 0);
     } finally {
       setIsRating(false);

@@ -1,5 +1,5 @@
 // src/pages/AuthPage.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
@@ -12,26 +12,7 @@ export default function AuthPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
-  const { login, register } = useAuth(); // Added register here
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const accessToken = params.get("accessToken");
-    const refreshToken = params.get("refreshToken");
-    const onboardingDone = params.get("onboardingDone") === "true";
-
-    if (accessToken && refreshToken) {
-      localStorage.setItem("accessToken", accessToken);
-      localStorage.setItem("refreshToken", refreshToken);
-
-      // Redirect based on onboarding status provided by backend [cite: 77, 81]
-      if (onboardingDone) {
-        navigate("/home");
-      } else {
-        navigate("/onboarding/genres");
-      }
-    }
-  }, [navigate]);
+  const { login, register } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -43,7 +24,6 @@ export default function AuthPage() {
         await login(email, password);
         navigate("/home");
       } else {
-        // Passing email, username, password as required by spec [cite: 49, 50, 51]
         await register(email, username, password);
         navigate("/onboarding/genres");
       }

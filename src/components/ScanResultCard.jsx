@@ -51,7 +51,7 @@ export default function ScanResultCard({ initialBook, index, scanId }) {
       });
       setIsSaved(true);
     } catch (err) {
-      alert(err.message || "Failed to save book.");
+      console.error(err.message || "Failed to save book.");
     } finally {
       setIsSaving(false);
     }

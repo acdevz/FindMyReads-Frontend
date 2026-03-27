@@ -62,9 +62,7 @@ export default function Library() {
   const handleGlobalSearch = (e) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
-    console.log(
-      `Triggering global search for: ${searchQuery} via /api/books/search?q=${searchQuery}`,
-    );
+    // TODO: Triggering global search for: ${searchQuery} via /api/books/search?q=${searchQuery}
   };
 
   return (

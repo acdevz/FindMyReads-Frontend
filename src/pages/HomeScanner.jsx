@@ -86,7 +86,6 @@ export default function HomeScanner() {
       navigate(`/scan/${scanResult.scanId}`);
     } catch (error) {
       console.error("Scan upload failed:", error);
-      alert(error.message || "Failed to analyze shelf.");
     } finally {
       setIsUploading(false);
     }

@@ -6,7 +6,7 @@ export default function MainLayout() {
   // Helper function to dynamically assign classes based on active state
   const getNavClasses = (isActive) => {
     const baseClasses =
-      "flex flex-col items-center justify-center px-5 py-2 transition-all";
+      "flex flex-col items-center justify-center px-8 py-2 transition-all";
     const activeClasses =
       "text-primary bg-surface-container rounded-[1.5rem] scale-105";
     const inactiveClasses = "text-on-surface/60 hover:text-primary";
