@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+const BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -35,7 +36,7 @@ export default function AuthPage() {
   };
 
   const handleGoogleOAuth = () => {
-    window.location.href = "/oauth2/authorization/google";
+    window.location.href = `${BASE_URL}/oauth2/authorization/google`;
   };
 
   return (

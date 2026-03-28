@@ -13,19 +13,5 @@ export default defineConfig((mode) => {
       tailwindcss(),
       // basicSsl(),
     ],
-
-    server: {
-      host: true,
-      proxy: {
-        "/api": {
-          target: env.BACKEND_URL,
-          changeOrigin: true,
-        },
-        "/oauth2": {
-          target: env.BACKEND_URL,
-          changeOrigin: true,
-        },
-      },
-    },
   };
 });
