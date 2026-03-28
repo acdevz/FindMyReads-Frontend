@@ -35,7 +35,12 @@ export async function fetchApi(endpoint, options = {}) {
     if (refreshRes.ok) {
       response = await fetch(`${BASE_URL}${endpoint}`, fetchOptions);
     } else {
-      window.location.href = "/login";
+      const currentPath = window.location.pathname;
+      const publicPaths = ["/", "/login"];
+
+      if (!publicPaths.includes(currentPath)) {
+        window.location.href = "/login";
+      }
       throw new Error("Session expired. Please log in again.");
     }
   }
