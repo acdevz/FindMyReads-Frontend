@@ -1,5 +1,6 @@
 // src/utils/api.js
 const BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
+let refreshPromise = null;
 
 export async function fetchApi(endpoint, options = {}) {
   const headers = { ...options.headers };
@@ -17,18 +18,25 @@ export async function fetchApi(endpoint, options = {}) {
   let response = await fetch(`${BASE_URL}${endpoint}`, fetchOptions);
 
   if (
-    response.status === 401 &&
-    endpoint !== "/api/auth/refresh" &&
-    endpoint !== "/api/auth/login"
+    (response.status === 401 || response.status === 403) &&
+    !endpoint.includes("/auth/")
   ) {
-    const refreshRes = await fetch(`${BASE_URL}/api/auth/refresh`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-    });
+    if (!refreshPromise) {
+      refreshPromise = fetch(`${BASE_URL}/api/auth/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      }).finally(() => {
+        refreshPromise = null;
+      });
+    }
+    const refreshRes = await refreshPromise;
 
     if (refreshRes.ok) {
       response = await fetch(`${BASE_URL}${endpoint}`, fetchOptions);
+    } else {
+      window.location.href = "/login";
+      throw new Error("Session expired. Please log in again.");
     }
   }
 
