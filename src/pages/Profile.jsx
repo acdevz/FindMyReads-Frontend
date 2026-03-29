@@ -346,11 +346,28 @@ export default function Profile() {
           </button>
         </section>
 
-        {/* Footer info */}
-        <div className="text-center pt-8 pb-4">
-          <span className="font-label text-[10px] uppercase tracking-[0.2em] text-on-surface-variant/40 font-bold">
-            FindMyReads v1.0.0
-          </span>
+        {/* Watermark Footer */}
+        <div className="relative flex flex-col items-center justify-center pt-24 pb-8 overflow-hidden mt-8 opacity-60 hover:opacity-100 transition-opacity duration-700 group">
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
+            <span className="font-headline italic text-[4rem] md:text-[5rem] font-black text-outline-variant/10 tracking-tighter whitespace-nowrap group-hover:scale-105 transition-transform duration-1000 ease-out">
+              FindMyReads
+            </span>
+          </div>
+
+          {/* Foreground Content */}
+          <div className="z-10 flex flex-col items-center gap-3 pt-6">
+            <span className="font-label text-[10px] uppercase tracking-[0.3em] text-on-surface-variant flex items-center gap-2 font-bold">
+              Made with{" "}
+              <span className="text-sm drop-shadow-sm">
+                <span
+                  className="material-symbols-outlined text-3xl"
+                  style={{ fontVariationSettings: "'FILL' 1" }}
+                >
+                  favorite
+                </span>
+              </span>
+            </span>
+          </div>
         </div>
       </main>
     </div>

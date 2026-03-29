@@ -24,7 +24,6 @@ export default defineConfig((mode) => {
           background_color: "#1a1c18",
           display: "standalone",
           ScreenOrientation: "portrait",
-          installable: true,
           icons: [
             {
               src: "pwa-192x192.png",

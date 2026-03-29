@@ -36,7 +36,7 @@ export async function fetchApi(endpoint, options = {}) {
       response = await fetch(`${BASE_URL}${endpoint}`, fetchOptions);
     } else {
       const currentPath = window.location.pathname;
-      const publicPaths = ["/", "/login"];
+      const publicPaths = ["/login"];
 
       if (!publicPaths.includes(currentPath)) {
         window.location.href = "/login";
